@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -153,7 +154,8 @@ SIMPLE_JWT = {
 
 
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',  
+    'http://localhost:5173',
+    'https://wantik-frontend-kb.onrender.com', 
 ]
 
 MEDIA_URL = '/media/'
