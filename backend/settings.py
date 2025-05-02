@@ -170,3 +170,5 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'hlobhai041@gmail.com'  
 EMAIL_HOST_PASSWORD = 'saclomhthywhhzkx'  
 DEFAULT_FROM_EMAIL = 'hlobhai041@gmail.com'
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
