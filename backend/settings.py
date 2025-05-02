@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-+_r&tzqry@(sv*pa*+bx@lyqo^h%%g)*kwxy8sy^n15w_x+6d3
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["wantik-backend-kb.onrender.com", "localhost"]
 
 
 
