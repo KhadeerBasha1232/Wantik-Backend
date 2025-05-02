@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ mail_subject }}</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; background-color: #f4f4f4; margin: 0; padding: 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f4; padding: 20px;">
+        <tr>
+            <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                    <tr>
+                        <td>
+                            <h2 style="color: #2c3e50;">Dear {{ contact_name }},</h2>
+                            <p style="font-size: 16px;">We hope this email finds you well.</p>
+                            <p style="font-size: 16px;">{{ message }}</p>
+                            {% if quote_no %}
+                            <p style="font-size: 16px; font-weight: bold; margin-top: 20px;">Quote Number: <span style="color: #2980b9;">{{ quote_no }}</span></p>
+                            {% endif %}
+                            <p style="font-size: 16px; margin-top: 30px;">Thank you for your business!</p>
+                            <p style="font-size: 16px;">
+                                Best regards,<br>
+                                <strong>{{ sender }}</strong><br>
+                                <span style="color: #7f8c8d;">{{ company_name }}</span>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
