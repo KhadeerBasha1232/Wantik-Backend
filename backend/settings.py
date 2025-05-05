@@ -12,7 +12,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
-
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -155,7 +157,7 @@ SIMPLE_JWT = {
 
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
-    'https://wantik-frontend-kb.vercel.app/', 
+    'https://wantik-frontend-kb.vercel.app', 
 ]
 
 MEDIA_URL = '/media/'
@@ -164,11 +166,11 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 
-EMAIL_HOST = 'smtp.gmail.com'  
+EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'hlobhai041@gmail.com'  
-EMAIL_HOST_PASSWORD = 'saclomhthywhhzkx'  
-DEFAULT_FROM_EMAIL = 'hlobhai041@gmail.com'
+EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
+DEFAULT_FROM_EMAIL = os.getenv('EMAIL_HOST_USER')
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
