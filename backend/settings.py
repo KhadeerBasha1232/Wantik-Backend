@@ -28,7 +28,7 @@ SECRET_KEY = 'django-insecure-+_r&tzqry@(sv*pa*+bx@lyqo^h%%g)*kwxy8sy^n15w_x+6d3
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["wantik-backend-kb.onrender.com", "localhost"]
+ALLOWED_HOSTS = ["wantik-backend-kb.onrender.com", "*"]
 
 
 
@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'sales',
     'authapp',
+    'HR',
 ]
 
 MIDDLEWARE = [

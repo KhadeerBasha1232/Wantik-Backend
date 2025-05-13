@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Contact, Inquiry, Quote, QuoteProduct, OutgoingMail
+from .models import Contact, Inquiry, Quote, QuoteProduct, OutgoingMail, OrderService, SalesOrder, JobCard
 
 
 admin.site.register([
@@ -7,5 +7,8 @@ admin.site.register([
     Inquiry,
     Quote,
     QuoteProduct,
-    OutgoingMail
+    OutgoingMail,
+    OrderService,
+    SalesOrder,
+    JobCard,
 ])

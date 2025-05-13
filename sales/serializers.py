@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Contact, Inquiry, Quote, QuoteProduct, OutgoingMail
+from .models import Contact, Inquiry, Quote, QuoteProduct, OutgoingMail, OrderService, SalesOrder, Vehicle, JobCard
 from django.contrib.auth.models import User
 
 class UserSerializer(serializers.ModelSerializer):
@@ -148,3 +148,209 @@ class OutgoingMailSerializer(serializers.ModelSerializer):
         if 'message' in data and not data.get('message'):
             raise serializers.ValidationError({"message": "This field is required."})
         return data
+
+
+
+class OrderServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderService
+        fields = ['sorp', 'barcode', 'service_title', 'qty', 'rate', 'unit', 'amount']
+
+    def validate(self, data):
+        if not data.get('service_title'):
+            raise serializers.ValidationError({"service_title": "Service title is required."})
+        if data.get('qty', 0) <= 0:
+            raise serializers.ValidationError({"qty": "Quantity must be greater than 0."})
+        if data.get('rate', 0) <= 0:
+            raise serializers.ValidationError({"rate": "Rate must be greater than 0."})
+        return data
+
+class SalesOrderSerializer(serializers.ModelSerializer):
+    order_services = OrderServiceSerializer(many=True, required=False)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    contact_name = serializers.CharField(read_only=True, allow_null=True)
+    contact_number = serializers.CharField(read_only=True, allow_null=True)
+
+    class Meta:
+        model = SalesOrder
+        fields = [
+            'id', 'company_name', 'contact_email', 'order_no', 'company_email', 'lpo_no', 'address',
+            'subject', 'terms_and_conditions', 'issue_date', 'currency',
+            'cust_ref', 'our_ref', 'advance_amount', 'remarks', 'payment_terms',
+            'delivery_terms', 'omc_cost', 'subtotal', 'vat', 'net_total', 'created_by',
+            'created_by_username', 'created_on', 'order_services', 'status', 'accounts_status',
+            'gm_status', 'mgmt_status', 'contact_name', 'contact_number'
+        ]
+        read_only_fields = ['id', 'order_no', 'created_by', 'created_by_username', 'created_on', 'contact_name', 'contact_number']
+
+    def validate(self, data):
+        
+        print("Incoming data:", data)
+
+        if self.partial:
+            return data
+
+        required_fields = [
+            'company_name', 'contact_email', 'lpo_no', 'address', 'subject',
+            'issue_date', 'currency', 'payment_terms', 'delivery_terms'
+        ]
+        errors = {}
+        for field in required_fields:
+            if not data.get(field):
+                errors[field] = f"{field.replace('_', ' ')} is required."
+        
+        if not data.get('order_services'):
+            errors['order_services'] = "At least one service is required."
+        
+        
+        company_name = data.get('company_name')
+        if company_name:
+            try:
+                contact = Contact.objects.get(company_name=company_name)
+                data['contact_name'] = contact.contact_name
+                data['contact_number'] = contact.contact_number
+                
+                if data.get('contact_email') and data['contact_email'] != contact.contact_email:
+                    errors['contact_email'] = "Contact email must match the email of the selected company."
+                else:
+                    data['contact_email'] = contact.contact_email
+                
+                if not data.get('company_email'):
+                    data['company_email'] = contact.company_email
+            except Contact.DoesNotExist:
+                errors['company_name'] = "Company does not exist in contacts."
+        else:
+            errors['company_name'] = "Company name is required."
+
+        if errors:
+            raise serializers.ValidationError(errors)
+        
+        
+        services = data.get('order_services', [])
+        subtotal = sum((service.get('qty', 0) * service.get('rate', 0)) for service in services)
+        vat = subtotal * 0.05  
+        net_total = subtotal + vat
+
+        data['subtotal'] = subtotal
+        data['vat'] = vat
+        data['net_total'] = net_total
+
+        return data
+
+    def create(self, validated_data):
+        services_data = validated_data.pop('order_services')
+        validated_data['order_no'] = SalesOrder.generate_unique_order_no()
+        sales_order = SalesOrder.objects.create(**validated_data)
+        
+        for service_data in services_data:
+            OrderService.objects.create(sales_order=sales_order, **service_data)
+        
+        return sales_order
+
+    def update(self, instance, validated_data):
+        services_data = validated_data.pop('order_services', None)
+        
+        
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        
+        if services_data is not None:
+            instance.order_services.all().delete()
+            for service_data in services_data:
+                OrderService.objects.create(sales_order=instance, **service_data)
+            
+            
+            instance.subtotal = sum(service.qty * service.rate for service in instance.order_services.all())
+            instance.vat = instance.subtotal * 0.05
+            instance.net_total = instance.subtotal + instance.vat
+
+        instance.save()
+        return instance
+    
+class VehicleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Vehicle
+        fields = ['chassis_number', 'specification', 'remarks', 'vehicle_make', 'vehicle_type']
+
+    def validate(self, data):
+        if not data.get('chassis_number'):
+            raise serializers.ValidationError({"chassis_number": "Chassis number is required."})
+        return data
+
+class JobCardSerializer(serializers.ModelSerializer):
+    vehicles = VehicleSerializer(many=True, required=True)
+    created_by_username = serializers.CharField(source='created_by.username', read_only=True)
+    contact_name = serializers.CharField(read_only=True, allow_null=True)
+    contact_number = serializers.CharField(read_only=True, allow_null=True)
+
+    class Meta:
+        model = JobCard
+        fields = [
+            'id', 'job_card_no', 'company_name', 'contact_email', 'sales_order_number', 'quantity', 'status',
+            'remarks', 'created_by', 'created_by_username', 'created_on', 'vehicles',
+            'contact_name', 'contact_number'
+        ]
+        read_only_fields = ['id', 'job_card_no', 'created_by', 'created_by_username', 'created_on', 'contact_name', 'contact_number']
+
+    def validate(self, data):
+        if self.partial:
+            return data
+        
+        errors = {}
+        required_fields = ['company_name', 'contact_email', 'sales_order_number', 'quantity']
+        for field in required_fields:
+            if not data.get(field):
+                errors[field] = f"{field.replace('_', ' ')} is required."
+
+        if data.get('quantity', 0) <= 0:
+            errors['quantity'] = "Quantity must be greater than 0."
+
+        if not data.get('vehicles'):
+            errors['vehicles'] = "At least one vehicle is required."
+
+        company_name = data.get('company_name')
+        if company_name:
+            try:
+                contact = Contact.objects.get(company_name=company_name)
+                data['contact_name'] = contact.contact_name
+                data['contact_number'] = contact.contact_number
+                if data.get('contact_email') and data['contact_email'] != contact.contact_email:
+                    errors['contact_email'] = "Contact email must match the email of the selected company."
+                else:
+                    data['contact_email'] = contact.contact_email
+            except Contact.DoesNotExist:
+                errors['company_name'] = "Company does not exist in contacts."
+
+        sales_order_number = data.get('sales_order_number')
+        if sales_order_number and not SalesOrder.objects.filter(order_no=sales_order_number).exists():
+            errors['sales_order_number'] = "Invalid sales order number."
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
+        return data
+
+    def create(self, validated_data):
+        vehicles_data = validated_data.pop('vehicles')
+        validated_data['created_by'] = self.context['request'].user
+        job_card = JobCard.objects.create(**validated_data)
+
+        for vehicle_data in vehicles_data:
+            Vehicle.objects.create(job_card=job_card, **vehicle_data)
+
+        return job_card
+
+    def update(self, instance, validated_data):
+        vehicles_data = validated_data.pop('vehicles', None)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+
+        if vehicles_data is not None:
+            instance.vehicles.all().delete()
+            for vehicle_data in vehicles_data:
+                Vehicle.objects.create(job_card=instance, **vehicle_data)
+
+        instance.save()
+        return instance

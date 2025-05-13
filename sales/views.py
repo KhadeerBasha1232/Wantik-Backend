@@ -143,6 +143,17 @@ class QuotationCompanyListView(generics.ListAPIView):
         
         companies = Contact.objects.values('company_name','contact_email', 'company_email').distinct()
         return JsonResponse(list(companies), safe=False)
+
+
+class OrderCompanyListView(generics.ListAPIView):
+    queryset = Contact.objects.all()
+    serializer_class = ContactSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        
+        companies = Contact.objects.values('company_name','contact_email', 'company_email', 'contact_number').distinct()
+        return JsonResponse(list(companies), safe=False)
     
 @api_view(['GET'])
 def user_list(request):
@@ -334,4 +345,36 @@ class OutgoingMailListCreateView(generics.ListCreateAPIView):
 class OutgoingMailDetailView(generics.RetrieveUpdateDestroyAPIView):
     queryset = OutgoingMail.objects.all()
     serializer_class = OutgoingMailSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+
+from .models import SalesOrder, JobCard
+from .serializers import SalesOrderSerializer, JobCardSerializer
+
+class SalesOrderListCreateView(generics.ListCreateAPIView):
+    serializer_class = SalesOrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return SalesOrder.objects.filter(created_by=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+class SalesOrderDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = SalesOrderSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = SalesOrder.objects.all()
+
+class JobCardListCreateView(generics.ListCreateAPIView):
+    queryset = JobCard.objects.all()
+    serializer_class = JobCardSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+class JobCardDetailView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = JobCard.objects.all()
+    serializer_class = JobCardSerializer
     permission_classes = [permissions.IsAuthenticated]
