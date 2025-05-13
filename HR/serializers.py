@@ -42,14 +42,14 @@ class StaffDetailsSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        # Validate date fields
+        
         for field in ['passport_expiry', 'visa_expiry', 'insurance_expiry']:
             if data.get(field) and not isinstance(data[field], date):
                 raise serializers.ValidationError({field: f"{field.replace('_', ' ').capitalize()} must be a date."})
 
-        # Validate staff_type against URL parameter
+        
         staff_type = data.get('staff_type')
-        url_type = self.context.get('type', '').capitalize()  # Get type from URL (e.g., 'staff' -> 'Staff')
+        url_type = self.context.get('type', '').capitalize()  
         if url_type and staff_type and staff_type != url_type:
             raise serializers.ValidationError({
                 'staff_type': f"Staff type must be '{url_type}' to match the URL."
@@ -75,7 +75,7 @@ class VisaDetailsSerializer(serializers.ModelSerializer):
         ]
 
     def validate(self, data):
-        # Validate staff_type against URL parameter
+        
         staff_type = data.get('staff_type')
         url_type = self.context.get('type', '').capitalize()
         if url_type and staff_type and staff_type != url_type:

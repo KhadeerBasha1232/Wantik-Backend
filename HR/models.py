@@ -119,11 +119,11 @@ class LeaveRequest(models.Model):
     ]
 
     staff = models.ForeignKey(StaffDetails, on_delete=models.CASCADE, related_name='leave_requests')
-    staff_name = models.CharField(max_length=100)  # Denormalized for display
+    staff_name = models.CharField(max_length=100)  
     from_date = models.DateField()
     to_date = models.DateField()
     reason = models.TextField()
-    submitted_by = models.CharField(max_length=100)  # Store username or user ID
+    submitted_by = models.CharField(max_length=100)  
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Under Review')
     gm_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
     mgmt_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
@@ -164,21 +164,21 @@ class LeaveRequest(models.Model):
         ).delete()
 
     def save(self, *args, **kwargs):
-        # Ensure staff_name is set
+        
         if not self.staff_name:
             self.staff_name = self.staff.name
 
-        # Check if the instance already exists (update case)
+        
         if self.pk:
             old_instance = LeaveRequest.objects.get(pk=self.pk)
             if old_instance.status == 'Approved' and self.status != 'Approved':
-                # Status changed from Approved to something else, remove attendance records
+                
                 self.remove_attendance_records()
             elif self.status == 'Approved':
-                # Status is Approved, create or update attendance records
+                
                 self.create_attendance_records()
         else:
-            # New instance, only create attendance records if status is Approved
+            
             if self.status == 'Approved':
                 self.create_attendance_records()
 
@@ -187,7 +187,7 @@ class LeaveRequest(models.Model):
 class LeaveComment(models.Model):
     leave_request = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name='comments')
     comment = models.TextField()
-    commenter = models.CharField(max_length=100)  # Store username or role (e.g., GM, Mgmt)
+    commenter = models.CharField(max_length=100)  
     comment_date = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -211,11 +211,11 @@ class Loan(models.Model):
     ]
 
     staff = models.ForeignKey(StaffDetails, on_delete=models.CASCADE, related_name='loans')
-    staff_name = models.CharField(max_length=100)  # Denormalized for display
-    from_date = models.DateField()  # Borrowing date
-    to_date = models.DateField()  # Return date
+    staff_name = models.CharField(max_length=100)  
+    from_date = models.DateField()  
+    to_date = models.DateField()  
     reason = models.TextField()
-    submitted_by = models.CharField(max_length=100)  # Store username or user ID
+    submitted_by = models.CharField(max_length=100)  
     loan_status = models.CharField(max_length=20, choices=LOAN_STATUS_CHOICES, default='Pending')
     gm_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
     mgmt_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
@@ -229,7 +229,7 @@ class Loan(models.Model):
         return f"{self.staff_name} ({self.staff.staff_id}) - {self.from_date} to {self.to_date}"
 
     def save(self, *args, **kwargs):
-        # Ensure staff_name is set
+        
         if not self.staff_name:
             self.staff_name = self.staff.name
         super().save(*args, **kwargs)
@@ -237,7 +237,7 @@ class Loan(models.Model):
 class LoanComment(models.Model):
     loan = models.ForeignKey(Loan, on_delete=models.CASCADE, related_name='comments')
     comment = models.TextField()
-    commenter = models.CharField(max_length=100)  # Store username or role (e.g., GM, Mgmt)
+    commenter = models.CharField(max_length=100)  
     comment_date = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -261,17 +261,17 @@ class Overtime(models.Model):
     ]
 
     staff = models.ForeignKey(StaffDetails, on_delete=models.CASCADE, related_name='overtimes')
-    staff_name = models.CharField(max_length=100)  # Denormalized for display
-    ot_date = models.DateField()  # Date of overtime work
-    ot_start_time = models.TimeField()  # Start time of overtime
-    ot_end_time = models.TimeField()  # End time of overtime
-    duration = models.FloatField(blank=True)  # Duration in hours, calculated
+    staff_name = models.CharField(max_length=100)  
+    ot_date = models.DateField()  
+    ot_start_time = models.TimeField()  
+    ot_end_time = models.TimeField()  
+    duration = models.FloatField(blank=True)  
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     gm_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
     mgmt_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
     request_date = models.DateField(default=date.today)
-    submitted_by = models.CharField(max_length=100)  # Store username or user ID
+    submitted_by = models.CharField(max_length=100)  
 
     class Meta:
         verbose_name = "Overtime"
@@ -284,24 +284,24 @@ class Overtime(models.Model):
         """Calculate duration in hours between ot_start_time and ot_end_time."""
         start = datetime.combine(self.ot_date, self.ot_start_time)
         end = datetime.combine(self.ot_date, self.ot_end_time)
-        # Handle case where end_time is on the next day (e.g., 10 PM to 2 AM)
+        
         if end < start:
             end = datetime.combine(self.ot_date + timezone.timedelta(days=1), self.ot_end_time)
-        duration = (end - start).total_seconds() / 3600.0  # Convert to hours
-        return round(duration, 2)  # Round to 2 decimal places
+        duration = (end - start).total_seconds() / 3600.0  
+        return round(duration, 2)  
 
     def save(self, *args, **kwargs):
-        # Ensure staff_name is set
+        
         if not self.staff_name:
             self.staff_name = self.staff.name
-        # Calculate duration
+        
         self.duration = self.calculate_duration()
         super().save(*args, **kwargs)
 
 class OvertimeComment(models.Model):
     overtime = models.ForeignKey(Overtime, on_delete=models.CASCADE, related_name='comments')
     comment = models.TextField()
-    commenter = models.CharField(max_length=100)  # Store username or role (e.g., GM, Mgmt)
+    commenter = models.CharField(max_length=100)  
     comment_date = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -325,14 +325,14 @@ class Fine(models.Model):
     ]
 
     staff = models.ForeignKey(StaffDetails, on_delete=models.CASCADE, related_name='fines')
-    staff_name = models.CharField(max_length=100)  # Denormalized for display
-    fine_amount = models.DecimalField(max_digits=10, decimal_places=2)  # Fine amount in currency
+    staff_name = models.CharField(max_length=100)  
+    fine_amount = models.DecimalField(max_digits=10, decimal_places=2)  
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     gm_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
     mgmt_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
     request_date = models.DateField(default=date.today)
-    submitted_by = models.CharField(max_length=100)  # Store username
+    submitted_by = models.CharField(max_length=100)  
 
     class Meta:
         verbose_name = "Fine"
@@ -342,7 +342,7 @@ class Fine(models.Model):
         return f"{self.staff_name} ({self.staff.staff_id}) - {self.fine_amount} ({self.request_date})"
 
     def save(self, *args, **kwargs):
-        # Ensure staff_name is set
+        
         if not self.staff_name:
             self.staff_name = self.staff.name
         super().save(*args, **kwargs)
@@ -350,7 +350,7 @@ class Fine(models.Model):
 class FineComment(models.Model):
     fine = models.ForeignKey(Fine, on_delete=models.CASCADE, related_name='comments')
     comment = models.TextField()
-    commenter = models.CharField(max_length=100)  # Store username or role
+    commenter = models.CharField(max_length=100)  
     comment_date = models.DateTimeField(default=timezone.now)
 
     class Meta:
@@ -374,14 +374,14 @@ class Appraisal(models.Model):
     ]
 
     staff = models.ForeignKey(StaffDetails, on_delete=models.CASCADE, related_name='appraisals')
-    staff_name = models.CharField(max_length=100)  # Denormalized for display
-    appraisal_amount = models.DecimalField(max_digits=10, decimal_places=2)  # Amount in currency
+    staff_name = models.CharField(max_length=100)  
+    appraisal_amount = models.DecimalField(max_digits=10, decimal_places=2)  
     reason = models.TextField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
     gm_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
     mgmt_status = models.CharField(max_length=20, choices=EXTENDED_STATUS_CHOICES, default='Pending')
     request_date = models.DateField(default=date.today)
-    submitted_by = models.CharField(max_length=100)  # Store username
+    submitted_by = models.CharField(max_length=100)  
 
     class Meta:
         verbose_name = "Appraisal"
@@ -391,7 +391,7 @@ class Appraisal(models.Model):
         return f"{self.staff_name} ({self.staff.staff_id}) - Amount: {self.appraisal_amount} ({self.request_date})"
 
     def save(self, *args, **kwargs):
-        # Ensure staff_name is set
+        
         if not self.staff_name:
             self.staff_name = self.staff.name
         super().save(*args, **kwargs)
@@ -399,7 +399,7 @@ class Appraisal(models.Model):
 class AppraisalComment(models.Model):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE, related_name='comments')
     comment = models.TextField()
-    commenter = models.CharField(max_length=100)  # Store username or role
+    commenter = models.CharField(max_length=100)  
     comment_date = models.DateTimeField(default=timezone.now)
 
     class Meta:
